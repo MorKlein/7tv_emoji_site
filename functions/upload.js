@@ -4,53 +4,67 @@ const MEDIA_EXTENSIONS = {
   video: [".mp4", ".webm", ".ogv", ".mov"],
   audio: [".mp3", ".wav", ".ogg", ".m4a", ".aac", ".flac"]
 };
+const DEFAULT_REPO = "emoji_bot";
+const DEFAULT_FOLDER = "emoji";
 
 export async function onRequest(context) {
   const { request, env } = context;
-  const config = getConfig(env);
 
-  if (!config.ok) {
-    return jsonResponse({ error: config.error }, config.status);
-  }
+  try {
+    const config = getConfig(env);
 
-  if (request.method === "GET") {
-    const url = new URL(request.url);
-    const path = url.searchParams.get("path");
-
-    if (path) {
-      return handleMediaRequest(path, config);
+    if (!config.ok) {
+      return jsonResponse({ error: config.error }, config.status);
     }
 
-    return handleListRequest(request, config);
-  }
+    if (request.method === "GET") {
+      const url = new URL(request.url);
+      const path = url.searchParams.get("path");
 
-  if (request.method === "POST") {
-    return handleUploadRequest(request, config);
-  }
+      if (path) {
+        return handleMediaRequest(path, config);
+      }
 
-  return jsonResponse({ error: "Method not allowed." }, 405, {
-    Allow: "GET, POST"
-  });
+      return handleListRequest(request, config);
+    }
+
+    if (request.method === "POST") {
+      return handleUploadRequest(request, config);
+    }
+
+    return jsonResponse({ error: "Method not allowed." }, 405, {
+      Allow: "GET, POST"
+    });
+  } catch (error) {
+    return jsonResponse(
+      { error: error instanceof Error ? error.message : "Unexpected server error." },
+      500
+    );
+  }
+}
+
+function getEnvValue(env, name) {
+  return typeof env[name] === "string" ? env[name].trim() : "";
 }
 
 function getConfig(env) {
-  const token = typeof env.GITHUB_TOKEN === "string" ? env.GITHUB_TOKEN.trim() : "";
-  const repository = getRepositoryFromEnv(env);
-  const folder = normalizePath(typeof env.GITHUB_FOLDER === "string" ? env.GITHUB_FOLDER : "emoji");
+  const token = getEnvValue(env, "GIT_TOKEN");
+  const owner = getEnvValue(env, "GIT_USER");
+  const folder = DEFAULT_FOLDER;
 
   if (!token) {
     return {
       ok: false,
       status: 500,
-      error: "Cloudflare Pages env var GITHUB_TOKEN is not configured."
+      error: "Cloudflare Pages env var GIT_TOKEN is not configured."
     };
   }
 
-  if (!repository) {
+  if (!owner) {
     return {
       ok: false,
       status: 500,
-      error: "Set GITHUB_REPOSITORY (owner/repo) or GITHUB_REPOSITORY_URL in Cloudflare Pages."
+      error: "Cloudflare Pages env var GIT_USER is not configured."
     };
   }
 
@@ -58,59 +72,17 @@ function getConfig(env) {
     return {
       ok: false,
       status: 500,
-      error: "GITHUB_FOLDER must point to a valid repository folder."
+      error: "Repository folder is not configured."
     };
   }
 
   return {
     ok: true,
     token,
-    owner: repository.owner,
-    repo: repository.repo,
+    owner,
+    repo: DEFAULT_REPO,
     folder
   };
-}
-
-function getRepositoryFromEnv(env) {
-  const directValue = typeof env.GITHUB_REPOSITORY === "string" ? env.GITHUB_REPOSITORY.trim() : "";
-
-  if (directValue) {
-    const [owner, repo] = directValue.split("/");
-
-    if (owner && repo) {
-      return {
-        owner: owner.trim(),
-        repo: repo.trim()
-      };
-    }
-  }
-
-  const urlValue = typeof env.GITHUB_REPOSITORY_URL === "string" ? env.GITHUB_REPOSITORY_URL.trim() : "";
-
-  if (!urlValue) {
-    return null;
-  }
-
-  try {
-    const parsed = new URL(urlValue);
-
-    if (parsed.hostname !== "github.com") {
-      return null;
-    }
-
-    const parts = parsed.pathname.replace(/^\/|\/$/g, "").split("/");
-
-    if (parts.length < 2 || !parts[0] || !parts[1]) {
-      return null;
-    }
-
-    return {
-      owner: parts[0],
-      repo: parts[1].replace(/\.git$/i, "")
-    };
-  } catch {
-    return null;
-  }
 }
 
 async function handleListRequest(request, config) {
