@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Стикеры</title>
+  <title>РЎС‚РёРєРµСЂС‹</title>
 
   <style>
     :root {
@@ -150,14 +150,6 @@
       word-break: break-word;
     }
 
-    .file-type {
-      margin-top: 6px;
-      font-size: 13px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -263,90 +255,39 @@
 <body>
 
   <div class="toolbar">
-    <button class="secondary-btn theme-toggle" id="themeToggleBtn" type="button" aria-label="Сменить тему">☀</button>
-    <button class="primary-btn" id="openUploadModalBtn">Добавить изображение</button>
+    <button class="secondary-btn theme-toggle" id="themeToggleBtn" type="button" aria-label="РЎРјРµРЅРёС‚СЊ С‚РµРјСѓ">вЂ</button>
+    <button class="primary-btn" id="openUploadModalBtn">Р”РѕР±Р°РІРёС‚СЊ РёР·РѕР±СЂР°Р¶РµРЅРёРµ</button>
   </div>
 
   <div class="gallery" id="gallery"></div>
 
   <div class="modal-overlay" id="uploadModal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
-      <h2 id="uploadModalTitle">Добавить изображение</h2>
+      <h2 id="uploadModalTitle">Р”РѕР±Р°РІРёС‚СЊ РёР·РѕР±СЂР°Р¶РµРЅРёРµ</h2>
 
       <div class="dropzone" id="dropzone">
-        <p>Перетащите изображение сюда</p>
-        <p>или</p>
-        <button type="button" class="secondary-btn" id="chooseFileBtn">Выбрать из Проводника</button>
+        <p>РџРµСЂРµС‚Р°С‰РёС‚Рµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ СЃСЋРґР°</p>
+        <p>РёР»Рё</p>
+        <button type="button" class="secondary-btn" id="chooseFileBtn">Р’С‹Р±СЂР°С‚СЊ РёР· РџСЂРѕРІРѕРґРЅРёРєР°</button>
         <input class="hidden-input" type="file" id="fileInput" accept="image/*,video/*,audio/*">
-        <div class="selected-file" id="selectedFileName">Файл пока не выбран</div>
+        <div class="selected-file" id="selectedFileName">Р¤Р°Р№Р» РїРѕРєР° РЅРµ РІС‹Р±СЂР°РЅ</div>
       </div>
 
       <div class="field">
-        <label for="imgName">Название файла</label>
-        <input id="imgName" type="text" placeholder="Например, smile_file">
+        <label for="imgName">РќР°Р·РІР°РЅРёРµ С„Р°Р№Р»Р°</label>
+        <input id="imgName" type="text" placeholder="РќР°РїСЂРёРјРµСЂ, smile_file">
         <div class="field-error" id="imgNameError"></div>
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="secondary-btn" id="cancelUploadBtn">Отмена</button>
-        <button type="button" class="primary-btn" id="confirmUploadBtn">Готово</button>
+        <button type="button" class="secondary-btn" id="cancelUploadBtn">РћС‚РјРµРЅР°</button>
+        <button type="button" class="primary-btn" id="confirmUploadBtn">Р“РѕС‚РѕРІРѕ</button>
       </div>
     </div>
   </div>
 
   <script>
-    const REPOSITORY_URL = "https://github.com/MorKlein/emoji_bot";
-
-    function getEnvValue(name) {
-      if (typeof process !== "undefined" && process.env && typeof process.env[name] === "string") {
-        return process.env[name].trim();
-      }
-
-      if (typeof window !== "undefined" && window.__ENV__ && typeof window.__ENV__[name] === "string") {
-        return window.__ENV__[name].trim();
-      }
-
-      return "";
-    }
-
-    function parseGitHubRepositoryUrl(url) {
-      const trimmedUrl = url.trim();
-
-      if (!trimmedUrl) {
-        return null;
-      }
-
-      try {
-        const parsedUrl = new URL(trimmedUrl);
-
-        if (parsedUrl.hostname !== "github.com") {
-          return null;
-        }
-
-        const pathParts = parsedUrl.pathname.replace(/^\/|\/$/g, "").split("/");
-
-        if (pathParts.length < 2 || !pathParts[0] || !pathParts[1]) {
-          return null;
-        }
-
-        return {
-          owner: pathParts[0],
-          repo: pathParts[1].replace(/\.git$/i, "")
-        };
-      } catch (error) {
-        return null;
-      }
-    }
-
-    const TOKEN = getEnvValue("GIT_TOKEN");
-    const repositoryInfo = parseGitHubRepositoryUrl(REPOSITORY_URL);
-    const USER = repositoryInfo ? repositoryInfo.owner : "";
-    const REPO = repositoryInfo ? repositoryInfo.repo : "";
-    const FOLDER = "emoji";
-    const API_BASE = `https://api.github.com/repos/${USER}/${REPO}/contents`;
-    const missingRepositoryConfig = !repositoryInfo;
-    const missingUploadConfig = !TOKEN;
-
+    const API_ENDPOINT = "/upload";
     const gallery = document.getElementById("gallery");
     const uploadModal = document.getElementById("uploadModal");
     const openUploadModalBtn = document.getElementById("openUploadModalBtn");
@@ -361,6 +302,7 @@
     const selectedFileName = document.getElementById("selectedFileName");
 
     let selectedFile = null;
+    let apiAvailable = true;
     const themeStorageKey = "gallery-theme";
     const validFileNamePattern = /^[A-Za-z_]+$/;
 
@@ -370,66 +312,32 @@
       audio: [".mp3", ".wav", ".ogg", ".m4a", ".aac", ".flac"]
     };
 
-    function createGitHubHeaders(acceptHeader) {
-      const headers = {
-        "Accept": acceptHeader
-      };
-
-      if (TOKEN) {
-        headers["Authorization"] = `token ${TOKEN}`;
-      }
-
-      return headers;
-    }
-
-    const apiJsonHeaders = createGitHubHeaders("application/vnd.github+json");
-    const apiRawHeaders = createGitHubHeaders("application/vnd.github.raw");
-
-    applyMissingConfigState();
     loadMediaFiles();
     applyTheme(localStorage.getItem(themeStorageKey) === "dark" ? "dark" : "light");
     confirmUploadBtn.disabled = true;
-
-    function hasRepositoryConfig() {
-      return !missingRepositoryConfig;
-    }
-
-    function hasUploadConfig() {
-      return hasRepositoryConfig() && !missingUploadConfig;
-    }
-
-    function getMissingRepositoryMessage() {
-      return "Укажите корректную ссылку в переменной REPOSITORY_URL.";
-    }
-
-    function getMissingUploadMessage() {
-      return "Для загрузки файлов укажите переменную окружения GIT_TOKEN.";
-    }
-
-    function applyMissingConfigState() {
-      if (!hasUploadConfig()) {
-        openUploadModalBtn.disabled = true;
-        openUploadModalBtn.title = hasRepositoryConfig()
-          ? getMissingUploadMessage()
-          : getMissingRepositoryMessage();
-      }
-    }
 
     function setGalleryStatus(message) {
       gallery.innerHTML = `<div class="gallery-status">${message}</div>`;
     }
 
+    function setApiUnavailable(message) {
+      apiAvailable = false;
+      openUploadModalBtn.disabled = true;
+      openUploadModalBtn.title = message;
+    }
+
+    function setApiAvailable() {
+      apiAvailable = true;
+      openUploadModalBtn.disabled = false;
+      openUploadModalBtn.title = "";
+    }
+
     function applyTheme(theme) {
       const isDark = theme === "dark";
       document.body.classList.toggle("dark-theme", isDark);
-      themeToggleBtn.textContent = isDark ? "☾" : "☀";
-      themeToggleBtn.setAttribute("aria-label", isDark ? "Включить светлую тему" : "Включить тёмную тему");
+      themeToggleBtn.textContent = isDark ? "вѕ" : "вЂ";
+      themeToggleBtn.setAttribute("aria-label", isDark ? "Р’РєР»СЋС‡РёС‚СЊ СЃРІРµС‚Р»СѓСЋ С‚РµРјСѓ" : "Р’РєР»СЋС‡РёС‚СЊ С‚С‘РјРЅСѓСЋ С‚РµРјСѓ");
       localStorage.setItem(themeStorageKey, theme);
-    }
-
-    function getFileExtension(name) {
-      const dotIndex = name.lastIndexOf(".");
-      return dotIndex > -1 ? name.slice(dotIndex) : "";
     }
 
     function validateFileName() {
@@ -438,84 +346,45 @@
 
       imgNameInput.classList.toggle("invalid", value.length > 0 && !isValid);
       imgNameError.textContent = value.length > 0 && !isValid
-        ? "Разрешены только английские буквы и символ подчёркивания."
+        ? "Only English letters and underscores are allowed."
         : "";
-      confirmUploadBtn.disabled = !selectedFile || !isValid;
+      confirmUploadBtn.disabled = !selectedFile || !isValid || !apiAvailable;
 
       return isValid;
     }
 
     async function loadMediaFiles() {
-      if (!hasRepositoryConfig()) {
-        setGalleryStatus(`${getMissingRepositoryMessage()} Затем обновите страницу.`);
-        return;
-      }
-      setGalleryStatus("Загрузка медиафайлов...");
+      setGalleryStatus("Loading media files...");
 
       try {
-        const response = await fetch(`${API_BASE}/${FOLDER}`, {
-          headers: apiJsonHeaders
-        });
-
+        const response = await fetch(API_ENDPOINT);
         const data = await response.json();
 
         if (!response.ok) {
-          if (response.status === 404) {
-            setGalleryStatus(`Папка "${FOLDER}" не найдена или пока пуста.`);
-            return;
-          }
-
-          throw new Error(data.message || `HTTP ${response.status}`);
+          throw new Error(data.error || `HTTP ${response.status}`);
         }
 
-        if (!Array.isArray(data)) {
-          throw new Error("GitHub вернул неожиданный формат данных");
+        if (!data || !Array.isArray(data.files)) {
+          throw new Error("Unexpected API response.");
         }
 
-        const mediaFiles = data
-          .filter(file => file.type === "file")
-          .map(file => ({
-            ...file,
-            mediaType: getMediaType(file.name)
-          }))
-          .filter(file => file.mediaType);
+        setApiAvailable();
 
-        if (mediaFiles.length === 0) {
-          setGalleryStatus("В папке пока нет поддерживаемых медиафайлов.");
+        if (data.files.length === 0) {
+          setGalleryStatus("The media folder is empty.");
           return;
         }
 
         gallery.innerHTML = "";
 
-        for (const file of mediaFiles) {
-          try {
-            const mediaUrl = await getMediaFileUrl(file.path);
-            createCard(mediaUrl, file.name, file.mediaType);
-          } catch (error) {
-            console.log(`Не удалось загрузить файл ${file.name}:`, error);
-          }
-        }
-
-        if (!gallery.children.length) {
-          setGalleryStatus("Не удалось загрузить медиафайлы из репозитория.");
-        }
+        data.files.forEach(file => {
+          createCard(file.url, file.name, file.mediaType);
+        });
       } catch (error) {
-        console.log("Ошибка:", error);
-        setGalleryStatus(`Ошибка загрузки: ${error.message}`);
+        console.log("Load error:", error);
+        setApiUnavailable(error.message);
+        setGalleryStatus(`Load error: ${error.message}`);
       }
-    }
-
-    async function getMediaFileUrl(path) {
-      const response = await fetch(`${API_BASE}/${path}`, {
-        headers: apiRawHeaders
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
     }
 
     function getMediaType(name) {
@@ -534,6 +403,10 @@
       }
 
       return null;
+    }
+
+    function getDisplayName(name) {
+      return name.replace(/\.[^.]+$/, "");
     }
 
     function isSupportedMediaFile(file) {
@@ -567,19 +440,19 @@
       }
 
       const title = document.createElement("p");
-      title.textContent = name;
-
-      const type = document.createElement("div");
-      type.className = "file-type";
-      type.textContent = mediaType;
+      title.textContent = getDisplayName(name);
 
       card.appendChild(mediaElement);
       card.appendChild(title);
-      card.appendChild(type);
       gallery.appendChild(card);
     }
 
     function openUploadModal() {
+      if (!apiAvailable) {
+        alert("Upload API is not available yet.");
+        return;
+      }
+
       uploadModal.classList.add("open");
     }
 
@@ -590,7 +463,7 @@
       imgNameInput.value = "";
       imgNameInput.classList.remove("invalid");
       imgNameError.textContent = "";
-      selectedFileName.textContent = "Файл пока не выбран";
+      selectedFileName.textContent = "Р¤Р°Р№Р» РїРѕРєР° РЅРµ РІС‹Р±СЂР°РЅ";
       dropzone.classList.remove("dragover");
       confirmUploadBtn.disabled = true;
     }
@@ -601,13 +474,13 @@
       }
 
       if (!isSupportedMediaFile(file)) {
-        alert("Можно выбрать только медиафайл");
+        alert("You can upload only image, video, or audio files.");
         return;
       }
 
       selectedFile = file;
       imgNameInput.value = file.name.replace(/\.[^.]+$/, "").replace(/[^A-Za-z_]/g, "");
-      selectedFileName.textContent = `Выбран файл: ${file.name}`;
+      selectedFileName.textContent = `Selected file: ${file.name}`;
       validateFileName();
     }
 
@@ -649,63 +522,48 @@
     });
 
     async function uploadToGitHub() {
-      if (!hasUploadConfig()) {
-        alert(hasRepositoryConfig() ? getMissingUploadMessage() : getMissingRepositoryMessage());
+      const name = imgNameInput.value.trim();
+
+      if (!apiAvailable) {
+        alert("Upload API is not available.");
         return;
       }
-      const name = imgNameInput.value.trim();
-      const extension = selectedFile ? getFileExtension(selectedFile.name) : "";
 
       if (!selectedFile || !name) {
-        alert("Выберите изображение и укажите название файла");
+        alert("Choose a file and enter a file name.");
         return;
       }
 
       if (!validateFileName()) {
-        alert("Название файла должно содержать только английские буквы или подчёркивания");
+        alert("The file name must contain only English letters and underscores.");
         return;
       }
 
       confirmUploadBtn.disabled = true;
 
-      const reader = new FileReader();
-      reader.readAsDataURL(selectedFile);
+      try {
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("file", selectedFile, selectedFile.name);
 
-      reader.onloadend = async function () {
-        const base64 = reader.result.split(",")[1];
-        const path = `${FOLDER}/${name}${extension}`;
+        const response = await fetch(API_ENDPOINT, {
+          method: "POST",
+          body: formData
+        });
+        const data = await response.json();
 
-        try {
-          const upload = await fetch(
-            `https://api.github.com/repos/${USER}/${REPO}/contents/${path}`,
-            {
-              method: "PUT",
-              headers: {
-                "Authorization": `token ${TOKEN}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                message: "Добавлено изображение",
-                content: base64
-              })
-            }
-          );
-
-          if (upload.ok) {
-            await upload.json();
-            alert("Загружено в GitHub!");
-            closeUploadModal();
-            location.reload();
-          } else {
-            alert("Ошибка загрузки");
-            validateFileName();
-          }
-        } catch (error) {
-          console.log("Ошибка загрузки:", error);
-          alert("Не удалось загрузить изображение");
-          validateFileName();
+        if (!response.ok) {
+          throw new Error(data.error || "Upload failed.");
         }
-      };
+
+        alert("Uploaded to GitHub.");
+        closeUploadModal();
+        await loadMediaFiles();
+      } catch (error) {
+        console.log("Upload error:", error);
+        alert(error.message || "Could not upload the file.");
+        validateFileName();
+      }
     }
   </script>
 
