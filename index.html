@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Р РЋРЎвЂљР С‘Р С”Р ВµРЎР‚РЎвЂ№</title>
+  <title>Смайлики</title>
 
   <style>
     :root {
@@ -59,11 +59,6 @@
       margin-bottom: 20px;
     }
 
-    h1 {
-      text-align: center;
-      margin: 0 0 24px;
-    }
-
     button,
     input[type="text"] {
       font: inherit;
@@ -79,6 +74,12 @@
 
     button:hover {
       transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
     }
 
     .primary-btn {
@@ -97,12 +98,6 @@
 
     .secondary-btn:hover {
       background: var(--secondary-hover);
-    }
-
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-      transform: none;
     }
 
     .theme-toggle {
@@ -255,38 +250,38 @@
 <body>
 
   <div class="toolbar">
-    <button class="secondary-btn theme-toggle" id="themeToggleBtn" type="button" aria-label="Р РЋР СР ВµР Р…Р С‘РЎвЂљРЎРЉ РЎвЂљР ВµР СРЎС“">РІВР‚</button>
-    <button class="primary-btn" id="openUploadModalBtn">Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р Вµ</button>
+    <button class="secondary-btn theme-toggle" id="themeToggleBtn" type="button" aria-label="Сменить тему">☀</button>
+    <button class="primary-btn" id="openUploadModalBtn">Добавить изображение</button>
   </div>
 
   <div class="gallery" id="gallery"></div>
 
   <div class="modal-overlay" id="uploadModal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
-      <h2 id="uploadModalTitle">Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р Вµ</h2>
+      <h2 id="uploadModalTitle">Добавить изображение</h2>
 
       <div class="dropzone" id="dropzone">
-        <p>Р СџР ВµРЎР‚Р ВµРЎвЂљР В°РЎвЂ°Р С‘РЎвЂљР Вµ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р Вµ РЎРѓРЎР‹Р Т‘Р В°</p>
-        <p>Р С‘Р В»Р С‘</p>
-        <button type="button" class="secondary-btn" id="chooseFileBtn">Р вЂ™РЎвЂ№Р В±РЎР‚Р В°РЎвЂљРЎРЉ Р С‘Р В· Р СџРЎР‚Р С•Р Р†Р С•Р Т‘Р Р…Р С‘Р С”Р В°</button>
+        <p>Перетащите изображение сюда</p>
+        <p>или</p>
+        <button type="button" class="secondary-btn" id="chooseFileBtn">Выбрать из Проводника</button>
         <input class="hidden-input" type="file" id="fileInput" accept="image/*,video/*,audio/*">
-        <div class="selected-file" id="selectedFileName">Р В¤Р В°Р в„–Р В» Р С—Р С•Р С”Р В° Р Р…Р Вµ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…</div>
+        <div class="selected-file" id="selectedFileName">Файл пока не выбран</div>
       </div>
 
       <div class="field">
-        <label for="imgName">Р СњР В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ РЎвЂћР В°Р в„–Р В»Р В°</label>
-        <input id="imgName" type="text" placeholder="Р СњР В°Р С—РЎР‚Р С‘Р СР ВµРЎР‚, smile_file">
+        <label for="imgName">Название файла</label>
+        <input id="imgName" type="text" placeholder="Например, smile_file">
         <div class="field-error" id="imgNameError"></div>
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="secondary-btn" id="cancelUploadBtn">Р С›РЎвЂљР СР ВµР Р…Р В°</button>
-        <button type="button" class="primary-btn" id="confirmUploadBtn">Р вЂњР С•РЎвЂљР С•Р Р†Р С•</button>
+        <button type="button" class="secondary-btn" id="cancelUploadBtn">Отмена</button>
+        <button type="button" class="primary-btn" id="confirmUploadBtn">Готово</button>
       </div>
     </div>
   </div>
 
-    <script>
+  <script>
     const API_ENDPOINT = "/upload";
     const gallery = document.getElementById("gallery");
     const uploadModal = document.getElementById("uploadModal");
@@ -335,8 +330,8 @@
     function applyTheme(theme) {
       const isDark = theme === "dark";
       document.body.classList.toggle("dark-theme", isDark);
-      themeToggleBtn.textContent = isDark ? "РІВС•" : "РІВР‚";
-      themeToggleBtn.setAttribute("aria-label", isDark ? "Р вЂ™Р С”Р В»РЎР‹РЎвЂЎР С‘РЎвЂљРЎРЉ РЎРѓР Р†Р ВµРЎвЂљР В»РЎС“РЎР‹ РЎвЂљР ВµР СРЎС“" : "Р вЂ™Р С”Р В»РЎР‹РЎвЂЎР С‘РЎвЂљРЎРЉ РЎвЂљРЎвЂР СР Р…РЎС“РЎР‹ РЎвЂљР ВµР СРЎС“");
+      themeToggleBtn.textContent = isDark ? "☾" : "☀";
+      themeToggleBtn.setAttribute("aria-label", isDark ? "Включить светлую тему" : "Включить тёмную тему");
       localStorage.setItem(themeStorageKey, theme);
     }
 
@@ -346,7 +341,7 @@
 
       imgNameInput.classList.toggle("invalid", value.length > 0 && !isValid);
       imgNameError.textContent = value.length > 0 && !isValid
-        ? "Only English letters and underscores are allowed."
+        ? "Допустимы только английские буквы и подчёркивания."
         : "";
       confirmUploadBtn.disabled = !selectedFile || !isValid || !apiAvailable;
 
@@ -368,7 +363,7 @@
     }
 
     async function loadMediaFiles() {
-      setGalleryStatus("Loading media files...");
+      setGalleryStatus("Загрузка медиафайлов...");
 
       try {
         const response = await fetch(API_ENDPOINT);
@@ -379,13 +374,13 @@
         }
 
         if (!data || !Array.isArray(data.files)) {
-          throw new Error("Unexpected API response.");
+          throw new Error("Неожиданный ответ API.");
         }
 
         setApiAvailable();
 
         if (data.files.length === 0) {
-          setGalleryStatus("The media folder is empty.");
+          setGalleryStatus("Папка с медиафайлами пока пуста.");
           return;
         }
 
@@ -395,10 +390,22 @@
           createCard(file.url, file.name, file.mediaType);
         });
       } catch (error) {
-        console.log("Load error:", error);
+        console.log("Ошибка загрузки:", error);
         setApiUnavailable(error.message);
-        setGalleryStatus(`Load error: ${error.message}`);
+        setGalleryStatus(`Ошибка загрузки: ${error.message}`);
       }
+    }
+
+    function getDisplayName(name) {
+      return name.replace(/\.[^.]+$/, "");
+    }
+
+    function isSupportedMediaFile(file) {
+      if (file.type.startsWith("image/") || file.type.startsWith("video/") || file.type.startsWith("audio/")) {
+        return true;
+      }
+
+      return Boolean(getMediaType(file.name));
     }
 
     function getMediaType(name) {
@@ -417,18 +424,6 @@
       }
 
       return null;
-    }
-
-    function getDisplayName(name) {
-      return name.replace(/\.[^.]+$/, "");
-    }
-
-    function isSupportedMediaFile(file) {
-      if (file.type.startsWith("image/") || file.type.startsWith("video/") || file.type.startsWith("audio/")) {
-        return true;
-      }
-
-      return Boolean(getMediaType(file.name));
     }
 
     function createCard(url, name, mediaType) {
@@ -463,7 +458,7 @@
 
     function openUploadModal() {
       if (!apiAvailable) {
-        alert("Upload API is not available yet.");
+        alert("API загрузки пока недоступен.");
         return;
       }
 
@@ -477,7 +472,7 @@
       imgNameInput.value = "";
       imgNameInput.classList.remove("invalid");
       imgNameError.textContent = "";
-      selectedFileName.textContent = "Р В¤Р В°Р в„–Р В» Р С—Р С•Р С”Р В° Р Р…Р Вµ Р Р†РЎвЂ№Р В±РЎР‚Р В°Р Р…";
+      selectedFileName.textContent = "Файл пока не выбран";
       dropzone.classList.remove("dragover");
       confirmUploadBtn.disabled = true;
     }
@@ -488,13 +483,13 @@
       }
 
       if (!isSupportedMediaFile(file)) {
-        alert("You can upload only image, video, or audio files.");
+        alert("Можно загружать только изображения, видео или аудио.");
         return;
       }
 
       selectedFile = file;
       imgNameInput.value = file.name.replace(/\.[^.]+$/, "").replace(/[^A-Za-z_]/g, "");
-      selectedFileName.textContent = `Selected file: ${file.name}`;
+      selectedFileName.textContent = `Выбран файл: ${file.name}`;
       validateFileName();
     }
 
@@ -539,17 +534,17 @@
       const name = imgNameInput.value.trim();
 
       if (!apiAvailable) {
-        alert("Upload API is not available.");
+        alert("API загрузки недоступен.");
         return;
       }
 
       if (!selectedFile || !name) {
-        alert("Choose a file and enter a file name.");
+        alert("Выберите файл и укажите его название.");
         return;
       }
 
       if (!validateFileName()) {
-        alert("The file name must contain only English letters and underscores.");
+        alert("Название файла должно содержать только английские буквы и подчёркивания.");
         return;
       }
 
@@ -567,15 +562,15 @@
         const data = await readApiResponse(response);
 
         if (!response.ok) {
-          throw new Error(data.error || "Upload failed.");
+          throw new Error(data.error || "Ошибка загрузки.");
         }
 
-        alert("Uploaded to GitHub.");
+        alert("Файл загружен на GitHub.");
         closeUploadModal();
         await loadMediaFiles();
       } catch (error) {
-        console.log("Upload error:", error);
-        alert(error.message || "Could not upload the file.");
+        console.log("Ошибка загрузки:", error);
+        alert(error.message || "Не удалось загрузить файл.");
         validateFileName();
       }
     }
@@ -583,4 +578,3 @@
 
 </body>
 </html>
-
