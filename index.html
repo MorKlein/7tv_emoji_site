@@ -201,6 +201,44 @@
       display: none;
     }
 
+    .preview-box {
+      display: none;
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--input-bg);
+    }
+
+    .preview-box.visible {
+      display: block;
+    }
+
+    .preview-label {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .preview-content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 160px;
+    }
+
+    .preview-content img,
+    .preview-content video {
+      display: block;
+      max-width: 100%;
+      max-height: 220px;
+      border-radius: 8px;
+    }
+
+    .preview-content audio {
+      width: 100%;
+    }
+
     .field {
       margin-top: 16px;
     }
@@ -268,6 +306,11 @@
         <div class="selected-file" id="selectedFileName">Файл пока не выбран</div>
       </div>
 
+      <div class="preview-box" id="previewBox">
+        <p class="preview-label">Предпросмотр</p>
+        <div class="preview-content" id="previewContent"></div>
+      </div>
+
       <div class="field">
         <label for="imgName">Название файла</label>
         <input id="imgName" type="text" placeholder="Например, smile_file">
@@ -292,11 +335,14 @@
     const chooseFileBtn = document.getElementById("chooseFileBtn");
     const fileInput = document.getElementById("fileInput");
     const dropzone = document.getElementById("dropzone");
+    const previewBox = document.getElementById("previewBox");
+    const previewContent = document.getElementById("previewContent");
     const imgNameInput = document.getElementById("imgName");
     const imgNameError = document.getElementById("imgNameError");
     const selectedFileName = document.getElementById("selectedFileName");
 
     let selectedFile = null;
+    let previewUrl = null;
     let apiAvailable = true;
     const themeStorageKey = "gallery-theme";
     const validFileNamePattern = /^[A-Za-z_]+$/;
@@ -346,6 +392,52 @@
       confirmUploadBtn.disabled = !selectedFile || !isValid || !apiAvailable;
 
       return isValid;
+    }
+
+    function clearPreview() {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+      }
+
+      previewContent.innerHTML = "";
+      previewBox.classList.remove("visible");
+    }
+
+    function renderPreview(file) {
+      clearPreview();
+
+      if (!file) {
+        return;
+      }
+
+      previewUrl = URL.createObjectURL(file);
+      const mediaType = getMediaType(file.name) || (file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "video" : file.type.startsWith("audio/") ? "audio" : null);
+
+      let previewElement;
+
+      if (mediaType === "image") {
+        previewElement = document.createElement("img");
+        previewElement.src = previewUrl;
+        previewElement.alt = file.name;
+      } else if (mediaType === "video") {
+        previewElement = document.createElement("video");
+        previewElement.src = previewUrl;
+        previewElement.controls = true;
+        previewElement.preload = "metadata";
+      } else if (mediaType === "audio") {
+        previewElement = document.createElement("audio");
+        previewElement.src = previewUrl;
+        previewElement.controls = true;
+        previewElement.preload = "metadata";
+      }
+
+      if (!previewElement) {
+        return;
+      }
+
+      previewContent.appendChild(previewElement);
+      previewBox.classList.add("visible");
     }
 
     async function readApiResponse(response) {
@@ -474,6 +566,7 @@
       imgNameError.textContent = "";
       selectedFileName.textContent = "Файл пока не выбран";
       dropzone.classList.remove("dragover");
+      clearPreview();
       confirmUploadBtn.disabled = true;
     }
 
@@ -490,6 +583,7 @@
       selectedFile = file;
       imgNameInput.value = file.name.replace(/\.[^.]+$/, "").replace(/[^A-Za-z_]/g, "");
       selectedFileName.textContent = `Выбран файл: ${file.name}`;
+      renderPreview(file);
       validateFileName();
     }
 
