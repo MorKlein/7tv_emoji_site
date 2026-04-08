@@ -1,4 +1,5 @@
-const VALID_FILE_NAME = /^[A-Za-z_]+$/;
+const INVALID_FILE_NAME_CHARS = /[<>:"/\\|?*\u0000-\u001F]/;
+const RESERVED_FILE_NAMES = new Set(["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"]);
 const MEDIA_EXTENSIONS = {
   image: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".avif"],
   video: [".mp4", ".webm", ".ogv", ".mov"],
@@ -45,6 +46,30 @@ export async function onRequest(context) {
 
 function getEnvValue(env, name) {
   return typeof env[name] === "string" ? env[name].trim() : "";
+}
+
+function getInvalidFileNameError(name) {
+  if (!name) {
+    return "File name is required.";
+  }
+
+  if (name === "." || name === "..") {
+    return "This file name is not allowed.";
+  }
+
+  if (INVALID_FILE_NAME_CHARS.test(name)) {
+    return "File name contains characters that are not allowed.";
+  }
+
+  if (name.endsWith(".") || name.endsWith(" ")) {
+    return "File name must not end with a dot or space.";
+  }
+
+  if (RESERVED_FILE_NAMES.has(name.toUpperCase())) {
+    return "This system file name is not allowed.";
+  }
+
+  return "";
 }
 
 function getConfig(env) {
@@ -164,11 +189,10 @@ async function handleUploadRequest(request, config) {
   const name = typeof formData.get("name") === "string" ? formData.get("name").trim() : "";
   const file = formData.get("file");
 
-  if (!name || !VALID_FILE_NAME.test(name)) {
-    return jsonResponse(
-      { error: "File name must contain only English letters and underscores." },
-      400
-    );
+  const invalidNameError = getInvalidFileNameError(name);
+
+  if (invalidNameError) {
+    return jsonResponse({ error: invalidNameError }, 400);
   }
 
   if (!file || typeof file.arrayBuffer !== "function" || typeof file.name !== "string") {
@@ -422,5 +446,7 @@ function jsonResponse(payload, status = 200, extraHeaders = {}) {
     headers
   });
 }
+
+
 
 
