@@ -187,14 +187,15 @@ async function handleUploadRequest(request, config) {
 
   try {
     const existingSha = await getExistingSha(config, repoPath);
-    const payload = {
-      message: existingSha ? `Update ${repoPath}` : `Add ${repoPath}`,
-      content
-    };
 
     if (existingSha) {
-      payload.sha = existingSha;
+      return jsonResponse({ error: "A file with this name already exists." }, 409);
     }
+
+    const payload = {
+      message: `Add ${repoPath}`,
+      content
+    };
 
     const response = await githubRequest(config, repoPath, {
       method: "PUT",
@@ -421,3 +422,5 @@ function jsonResponse(payload, status = 200, extraHeaders = {}) {
     headers
   });
 }
+
+
