@@ -344,6 +344,7 @@
     let selectedFile = null;
     let previewUrl = null;
     let apiAvailable = true;
+    const existingFileNames = new Set();
     const themeStorageKey = "gallery-theme";
     const validFileNamePattern = /^[A-Za-z_]+$/;
 
@@ -381,17 +382,34 @@
       localStorage.setItem(themeStorageKey, theme);
     }
 
+    function getTargetFileName(name, file = selectedFile) {
+      if (!file || !name) {
+        return "";
+      }
+
+      const dotIndex = file.name.lastIndexOf(".");
+      const extension = dotIndex >= 0 ? file.name.slice(dotIndex).toLowerCase() : "";
+      return `${name}${extension}`.toLowerCase();
+    }
+
+    function isFileNameTaken(name) {
+      return existingFileNames.has(getTargetFileName(name));
+    }
+
     function validateFileName() {
       const value = imgNameInput.value.trim();
       const isValid = validFileNamePattern.test(value);
+      const isTaken = isValid && isFileNameTaken(value);
 
-      imgNameInput.classList.toggle("invalid", value.length > 0 && !isValid);
-      imgNameError.textContent = value.length > 0 && !isValid
-        ? "Допустимы только английские буквы и подчёркивания."
+      imgNameInput.classList.toggle("invalid", value.length > 0 && (!isValid || isTaken));
+      imgNameError.textContent = value.length > 0
+        ? (!isValid
+          ? "Допустимы только английские буквы и подчёркивания."
+          : (isTaken ? "Файл с таким названием уже существует." : ""))
         : "";
-      confirmUploadBtn.disabled = !selectedFile || !isValid || !apiAvailable;
+      confirmUploadBtn.disabled = !selectedFile || !isValid || isTaken || !apiAvailable;
 
-      return isValid;
+      return isValid && !isTaken;
     }
 
     function clearPreview() {
@@ -470,6 +488,8 @@
         }
 
         setApiAvailable();
+        existingFileNames.clear();
+        data.files.forEach(file => existingFileNames.add(file.name.toLowerCase()));
 
         if (data.files.length === 0) {
           setGalleryStatus("Папка с медиафайлами пока пуста.");
@@ -638,7 +658,9 @@
       }
 
       if (!validateFileName()) {
-        alert("Название файла должно содержать только английские буквы и подчёркивания.");
+        alert(isFileNameTaken(name)
+          ? "Файл с таким названием уже существует."
+          : "Название файла должно содержать только английские буквы и подчёркивания.");
         return;
       }
 
@@ -659,6 +681,7 @@
           throw new Error(data.error || "Ошибка загрузки.");
         }
 
+        existingFileNames.add(getTargetFileName(name, selectedFile));
         alert("Файл загружен на GitHub.");
         closeUploadModal();
         await loadMediaFiles();
@@ -672,3 +695,5 @@
 
 </body>
 </html>
+
+
